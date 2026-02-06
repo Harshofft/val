@@ -681,16 +681,17 @@
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
+            -webkit-user-select: none;
         }
 
         .btn-no.moving {
-            position: fixed;
-            z-index: 1000;
-            transition: left 0.3s ease, top 0.3s ease;
+            position: fixed !important;
+            z-index: 1000 !important;
+            transition: left 0.25s ease, top 0.25s ease;
         }
 
         .btn-no:hover, .btn-no:active {
-            opacity: 0.9;
+            transform: scale(0.95);
         }
 
         .response {
@@ -1565,118 +1566,89 @@
         createRings();
         createMusicNotes();
 
-        // ========== NO BUTTON LOGIC ==========
-        let moveCount = 0;
-        let messageIndex = 0;
-        const maxMoves = 3;
-        let isProcessing = false;
-        
+        // Move the No button when touched/hovered
+        let noClickCount = 0;
         const noBtn = document.getElementById('noBtn');
+        let isButtonMoving = false;
         
-        const messages = [
-            "No 😢",
-            "Are you sure? 🥺",
-            "Please? 💔",
-            "Think again! 😭",
-            "Don't do this! 💕",
-            "I'll be sad! 😿",
-            "Pretty please? 🙏",
-            "Just say yes! 💖",
-            "I'll give you chocolates! 🍫",
-            "And flowers too! 🌹"
-        ];
+        // Touch support for No button - use touchend to avoid glitches
+        noBtn.addEventListener('touchstart', (e) => {
+            if (!isButtonMoving) {
+                isButtonMoving = true;
+                e.preventDefault();
+                moveButton();
+                setTimeout(() => { isButtonMoving = false; }, 300);
+            }
+        }, { passive: false });
         
-        function moveButtonToRandomPosition() {
+        function moveButton() {
             const btn = document.getElementById('noBtn');
-            const btnWidth = 160;
-            const btnHeight = 60;
-            const padding = 25;
-            const topPadding = isMobile ? 80 : 100;
-            const bottomPadding = isMobile ? 80 : 50;
             
-            const minX = padding;
-            const maxX = Math.max(minX + 20, window.innerWidth - btnWidth - padding);
-            const minY = topPadding;
-            const maxY = Math.max(minY + 20, window.innerHeight - btnHeight - bottomPadding);
+            // Get viewport dimensions
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
             
+            // Get button dimensions
+            const btnWidth = 160; // Fixed width estimate
+            const btnHeight = 55; // Fixed height estimate
+            
+            // Safe padding from edges
+            const padding = 20;
+            const topPadding = 100; // Account for music player
+            const bottomPadding = 30;
+            
+            // Calculate safe area
+            const safeLeft = padding;
+            const safeRight = viewportWidth - btnWidth - padding;
+            const safeTop = topPadding;
+            const safeBottom = viewportHeight - btnHeight - bottomPadding;
+            
+            // Ensure safe bounds are valid
+            const minX = Math.max(10, safeLeft);
+            const maxX = Math.max(minX + 50, safeRight);
+            const minY = Math.max(10, safeTop);
+            const maxY = Math.max(minY + 50, safeBottom);
+            
+            // Generate random position
             const newX = Math.floor(Math.random() * (maxX - minX)) + minX;
             const newY = Math.floor(Math.random() * (maxY - minY)) + minY;
             
+            // Add moving class and set position
             btn.classList.add('moving');
             btn.style.left = newX + 'px';
             btn.style.top = newY + 'px';
+            btn.style.margin = '0';
+            btn.style.transform = 'none';
         }
-        
-        function returnButtonToOriginal() {
+
+        function tryNo() {
+            noClickCount++;
             const btn = document.getElementById('noBtn');
-            btn.classList.remove('moving');
-            btn.style.left = '';
-            btn.style.top = '';
-            btn.style.position = '';
-        }
-        
-        function changeMessage() {
-            const btn = document.getElementById('noBtn');
-            messageIndex++;
             
-            if (messageIndex < messages.length) {
-                btn.textContent = messages[messageIndex];
+            const messages = [
+                "No 😢",
+                "Are you sure? 🥺",
+                "Please? 💔",
+                "Think again! 😭",
+                "Don't do this! 💕",
+                "I'll be sad! 😿",
+                "Pretty please? 🙏",
+                "Just say yes! 💖",
+                "I'll give you chocolates! 🍫",
+                "And flowers too! 🌹"
+            ];
+            
+            if (noClickCount < messages.length) {
+                btn.textContent = messages[noClickCount];
             } else {
                 btn.textContent = "Okay fine... Yes! 💖";
-                btn.style.background = 'linear-gradient(45deg, #e74c3c, #ff6b6b)';
-                btn.style.boxShadow = '0 8px 25px rgba(231, 76, 60, 0.5)';
-                btn.onmouseover = null;
                 btn.onclick = sayYes;
-                const newBtn = btn.cloneNode(true);
+                btn.onmouseover = null;
+                // Remove touch listener properly
+                btn.replaceWith(btn.cloneNode(true));
+                const newBtn = document.getElementById('noBtn');
                 newBtn.onclick = sayYes;
-                btn.parentNode.replaceChild(newBtn, btn);
-            }
-        }
-        
-        function handleNoButton(e) {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            
-            if (isProcessing) return;
-            isProcessing = true;
-            setTimeout(() => { isProcessing = false; }, 350);
-            
-            // First 3 taps: move button
-            if (moveCount < maxMoves) {
-                moveCount++;
-                moveButtonToRandomPosition();
-                
-                // After 3rd move, return to original
-                if (moveCount === maxMoves) {
-                    setTimeout(returnButtonToOriginal, 350);
-                }
-            } 
-            // 4th tap onwards: change message
-            else {
-                changeMessage();
-            }
-        }
-        
-        // Mobile touch
-        noBtn.addEventListener('touchstart', handleNoButton, { passive: false });
-        noBtn.addEventListener('touchend', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }, { passive: false });
-        
-        // Desktop hover (moves only)
-        function moveButton() {
-            if (!isMobile && moveCount < maxMoves) {
-                handleNoButton(null);
-            }
-        }
-        
-        // Desktop click (messages only after 3 moves)
-        function tryNo() {
-            if (!isMobile && moveCount >= maxMoves) {
-                handleNoButton(null);
+                newBtn.style.background = 'linear-gradient(45deg, #e74c3c, #ff6b6b)';
             }
         }
 
