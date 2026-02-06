@@ -945,7 +945,7 @@
     <div class="music-player">
         <button class="music-btn" id="musicBtn" onclick="toggleMusic()">🎵</button>
         <div class="music-info">
-            <span class="music-title">Perfect - Ed Sheeran</span>
+            <span class="music-title">Lush Life</span>
             <span class="music-artist">Romantic Vibes 💕</span>
         </div>
         <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50" onchange="changeVolume(this.value)">
@@ -1083,7 +1083,7 @@
 
         // Start song from middle when it loads
         bgMusic.addEventListener('loadedmetadata', function() {
-            bgMusic.currentTime = bgMusic.duration / 2;
+            bgMusic.currentTime = bgMusic.duration / 1.7;
         });
 
         // ========== MOBILE SECRET MENU ==========
